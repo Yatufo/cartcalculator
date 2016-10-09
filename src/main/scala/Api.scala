@@ -1,22 +1,35 @@
+import akka.actor.Actor
 
-trait PriceCalculator{
-  def calculate(cart : Cart): Priceable
+import scala.collection.parallel.ParSeq
+
+trait PriceCalculator {
+  def calculate(cart: Cart): Priceable
 }
 
 /**
   * get the cart with the lowest price after being bundled
+  *
   * @param bundlers bundlers to apply at the cart
   */
-class BestPriceCalculator(val bundlers: Seq[Bundler]) extends PriceCalculator{
+class DefaultBestPriceCalculator(val bundlers: Seq[Bundler]) extends PriceCalculator {
 
-  val permutations = bundlers.permutations.toSeq.par
+  val calculators = bundlers.permutations.toSeq.par.map(new DefaultPriceCalculator(_))
 
   override def calculate(cart: Cart): Priceable = {
-    val bundledCarts = permutations.map(permutation => {
-      permutation.foldLeft(cart)((c,bundler) => bundler.bundle(c))
-    })
-    val minPrice = bundledCarts.map(_.price).min
+    val bundledCarts = calculators.map(_.calculate(cart))(collection.breakOut)
+    bundledCarts.minBy(_.price)
+  }
 
-    bundledCarts.find(_.price == minPrice).getOrElse(cart)
+
+}
+
+class DefaultPriceCalculator(val bundlers: Seq[Bundler]) extends PriceCalculator {
+  override def calculate(cart: Cart): Priceable = {
+    bundlers.foldLeft(cart)((c, bundler) => bundler.bundle(c))
   }
 }
+
+object DefaultPriceCalculator {
+  def apply(bundlers: Seq[Bundler]) = new DefaultPriceCalculator(bundlers)
+}
+

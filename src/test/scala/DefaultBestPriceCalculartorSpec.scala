@@ -1,11 +1,11 @@
 import org.scalatest._
 import org.scalatest.mockito.MockitoSugar
 
-class BestPriceCalculartorSpec extends FlatSpec with Matchers with MockitoSugar {
+class DefaultBestPriceCalculartorSpec extends FlatSpec with Matchers with MockitoSugar {
 
 
   val bundlers: Seq[Bundler] = Seq(new OneAppleOneOrangeBundler, new TwoApplesForOneBundler)
-  val priceCalculator = new BestPriceCalculator(bundlers)
+  val priceCalculator = new DefaultBestPriceCalculator(bundlers)
 
   val apple = SingleItem("red apple", ItemCategory.APPLE, 10D)
 
